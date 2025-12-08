@@ -4,17 +4,18 @@ To run the Docker --
 2. To run the docker on 5000 port --> docker run -d -p 5000:5000 my-api
 3. Curl need to hit on postman -->
 
-    postman request POST 'http://localhost:5000/predict' \
-  --header 'Content-Type: application/json' \
-  --body '{
+    curl --location 'http://localhost:5000/predict' \
+--header 'Content-Type: application/json' \
+--data '{
   "features": [
     [
-      14.1, 20.3, 90.2, 600.0, 0.1, 0.2, 0.3, 0.1, 0.2, 0.06,
-      0.3, 1.2, 2.3, 25.0, 0.01, 0.06, 0.07, 0.02, 0.03, 0.01,
-      16.0, 25.0, 100.0, 800.0, 0.12, 0.35, 0.4, 0.15, 0.25, 0.07
+      14.1, 20.3, 90.2, 600.0, 0.111, 0.12, 0.3, 0.1, 0.21, 0.062,
+      0.3, 1.2, 2.3, 25.0, 0.02, 0.06, 0.07, 0.02, 0.03, 0.021,
+      16.0, 25.0, 100.0, 800.0, 0.12, 0.31, 0.4, 0.15, 0.215, 0.07
     ]
   ]
 }'
+
 
 
 If any changes made in the code - then need to stop the container and then again need to run the container to make the changes available.
