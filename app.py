@@ -7,8 +7,13 @@ from tensorflow import keras
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry import trace
 
+from prometheus_flask_exporter import PrometheusMetrics
+
 # Initialize Flask app
 app = Flask(__name__)
+
+# Set up Prometheus metrics
+metrics = PrometheusMetrics(app)
 
 # Instrument Flask with OpenTelemetry
 FlaskInstrumentor().instrument_app(app)
