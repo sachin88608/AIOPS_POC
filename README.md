@@ -76,3 +76,5 @@ http://prometheus:9090
 # Open Loki - Won't open from this 
 http://loki:3100
 
+
+Run **Docker stats** to get the CPU, Memory etc.. on CMD
