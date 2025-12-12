@@ -54,7 +54,7 @@ To visualize *Prometheus* and *Loki* together
 
 
 # <!-- Prometheus metrics -->
-Open: http://localhost:9090 in your browser (from the Prometheus container in compose).​
+Open: http://localhost:9090​
 
 Go to the “Graph” or “Expression” tab and type a metric name, for example:
 
@@ -78,3 +78,61 @@ http://loki:3100
 
 
 Run **Docker stats** to get the CPU, Memory etc.. on CMD
+
+
+4) Query in Prometheus
+In http://localhost:9090 you will now see:
+
+api_requests_total – per‑endpoint/method/status request counts.
+
+api_request_latency_seconds_bucket / _count / _sum – histogram for latency.
+
+prediction_errors_total – total failures.​
+
+Example PromQL:
+
+<!-- Requests per second: -->
+rate(api_requests_total[1m])
+
+<!-- p95 latency: -->
+histogram_quantile(0.95, sum(rate(api_request_latency_seconds_bucket[5m])) by (le))
+
+<!-- Error rate: -->
+rate(prediction_errors_total[5m]).
+
+
+<!-- Memory usage of each container (bytes): -->
+
+text
+container_memory_usage_bytes
+
+
+<!-- cpu_usage_seconds_total -->
+rate(container_cpu_usage_seconds_total[10m])
+
+<!-- memory_usage_bytes -->
+
+container_memory_usage_bytes
+
+
+## Check the Promethesus Logs on UI - Promethesus Level Logs only
+http://localhost:9090/metrics
+
+
+## For Flask api logs - Application level logs (Used in promothesus UI) - Important for us
+Open GIT BASH and run -->
+
+curl http://localhost:5000/metrics
+
+
+-- HOLD This POC for now..--
+
+1. To run the docker and up the terminal - **docker compose up --build**
+2. To stop the docker -- **docker compose down**
+3. To check the flask api logs -- Open GIT BASH and run --> **curl http://localhost:5000/metrics**
+4. To check Promethesus logs -- **http://localhost:9090/metrics**
+5. Learn more about the PROMQL and the Loki Queries 
+6. To open Grafana -- **http://localhost:3000/login**
+7. To open Promethesus -- **http://prometheus:9090**
+8. Use postman to hit the my-api-flask-app-1 (**Curl** is already present at the top)
+9. To check the what all containers are running -- **docker ps**

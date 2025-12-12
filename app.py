@@ -7,6 +7,8 @@ from tensorflow import keras
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry import trace
 
+import time
+from prometheus_client import Counter, Histogram
 from prometheus_flask_exporter import PrometheusMetrics
 
 # Initialize Flask app
@@ -14,6 +16,24 @@ app = Flask(__name__)
 
 # Set up Prometheus metrics
 metrics = PrometheusMetrics(app)
+
+# Custom metrics derived from "logs"
+REQUEST_COUNTER = Counter(
+    "api_requests_total",
+    "Total API requests",
+    ["endpoint", "method", "status"]
+)
+
+REQUEST_LATENCY = Histogram(
+    "api_request_latency_seconds",
+    "Latency of API requests in seconds",
+    ["endpoint", "method"]
+)
+
+PREDICTION_ERRORS = Counter(
+    "prediction_errors_total",
+    "Total failed / errored predictions"
+)
 
 # Instrument Flask with OpenTelemetry
 FlaskInstrumentor().instrument_app(app)
@@ -50,14 +70,44 @@ def home():
     
 # API endpoint
 @app.route('/predict', methods=['POST'])
+# def predict():
+#     # Get input data from request
+#     data = request.get_json(force=True)
+#     X_new = np.array(data['features'])
+#     X_new_scaled = scaler.transform(X_new)
+#     y_proba = model.predict(X_new_scaled, verbose = 0)
+#     y_pred = (y_proba >= 0.5).astype(int).reshape(-1)
+#     return jsonify({'probabilities': y_proba.tolist(), 'predictions': y_pred.tolist()})
+
 def predict():
-    # Get input data from request
-    data = request.get_json(force=True)
-    X_new = np.array(data['features'])
-    X_new_scaled = scaler.transform(X_new)
-    y_proba = model.predict(X_new_scaled, verbose = 0)
-    y_pred = (y_proba >= 0.5).astype(int).reshape(-1)
-    return jsonify({'probabilities': y_proba.tolist(), 'predictions': y_pred.tolist()})
+    start_time = time.time()
+    status = 200
+    try:
+        data = request.get_json(force=True)
+        X_new = np.array(data['features'])
+        X_new_scaled = scaler.transform(X_new)
+        y_proba = model.predict(X_new_scaled, verbose=0)
+        y_pred = (y_proba >= 0.5).astype(int).reshape(-1)
+
+        return jsonify({
+            'probabilities': y_proba.tolist(),
+            'predictions': y_pred.tolist()
+        })
+    except Exception:
+        status = 500
+        PREDICTION_ERRORS.inc()
+        raise
+    finally:
+        duration = time.time() - start_time
+        REQUEST_COUNTER.labels(
+            endpoint="/predict",
+            method="POST",
+            status=status
+        ).inc()
+        REQUEST_LATENCY.labels(
+            endpoint="/predict",
+            method="POST"
+        ).observe(duration)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
